@@ -82,17 +82,20 @@ def corto(lbl): return lbl.split(" (")[0] if lbl else lbl
 ev=[]
 for f in flights:
     dst=f["destino"] or ""
-    # "en ruta / sin aeropuerto cercano" => el vuelo sigue en el aire (no aterrizó).
-    # No inventar un aterrizaje: mostrar que va en camino.
-    en_ruta = (not dst) or ("sin aeropuerto" in dst)
+    # Vuelo en curso ("(en vuelo)"): todavía no se muestra en la actividad.
+    # Recién aparece (despegue + aterrizaje) cuando el avión ya terminó/está quieto.
+    if "en vuelo" in dst.lower():
+        continue
     if f["inicio"]: ev.append((f["inicio"], f'{f["inicio"][11:16]}  {f["matricula"]} despegó de {corto(f["origen"])}'))
-    # Solo registrar aterrizaje si hay aeropuerto de destino real (no si sigue en ruta).
-    if f["fin"] and not en_ruta:
+    # Aterrizaje sólo si conocemos un aeropuerto real (las etiquetas entre paréntesis
+    # —"(fuera de cobertura)", "(sin aeropuerto cercano)"— no son aeropuertos).
+    real_dst = bool(dst) and not dst.startswith("(")
+    if f["fin"] and real_dst:
         ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
 g=collections.defaultdict(lambda:{"a":set(),"lbl":"","f":""})
 for f in flights:
     fch=(f["fin"] or f["inicio"] or "")[:10]; dst=f["destino"]
-    if not fch or not dst or "sin aeropuerto" in dst: continue
+    if not fch or not dst or dst.startswith("("): continue
     k=(fch,dst); g[k]["a"].add(f["matricula"]); g[k]["lbl"]=dst; g[k]["f"]=fch
 for (fch,dst),x in g.items():
     if len(x["a"])>=3: ev.append((fch+" 23:59", f'Coincidencia · {len(x["a"])} aeronaves en {corto(dst)} · {fch}'))

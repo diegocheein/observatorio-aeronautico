@@ -16,7 +16,7 @@ Uso:
     PADRON_DB=/ruta/vuelos.db python3 build_flights.py
 Sólo usa librería estándar.
 """
-import csv, sqlite3, os, math, datetime
+import csv, sqlite3, os, math, datetime, time
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 DB = os.environ.get("PADRON_DB", os.path.join(BASE, "vuelos.db"))
@@ -26,6 +26,16 @@ HISTORIAL = os.path.join(BASE, "historial_opensky.csv")   # backfill OpenSky (op
 GAP_MIN = 30          # minutos sin señal => nuevo tramo
 RADIO_KM = 25         # radio máx. para asignar un aeropuerto
 MIN_PUNTOS = 3        # tramos con menos puntos se descartan (ruido)
+
+# --- detección de "vuelo terminado" (el avión ya aterrizó / está quieto) ---
+SETTLE_SEG = 20 * 60  # sin señal nueva por 20 min => el vuelo terminó
+ALT_TIERRA = 3000     # ft: por debajo se considera bajo (aproximación/tierra)
+GS_TIERRA  = 80       # kt: por debajo se considera lento (tierra/taxi)
+QUIETO_SEG = 5 * 60   # tiene que estar bajo+lento al menos 5 min para contarlo posado
+
+# Hora local de Argentina (UTC-3, sin horario de verano). El VPS corre en UTC,
+# así que convertimos a -3 para que la actividad muestre la hora argentina.
+AR_TZ = datetime.timezone(datetime.timedelta(hours=-3))
 
 def haversine(la1, lo1, la2, lo2):
     R = 6371.0
@@ -58,7 +68,7 @@ def aeropuerto_cercano(lat, lon, aps):
     return {"label": "(en ruta / sin aeropuerto cercano)", "code": "", "lat": lat, "lon": lon}
 
 def fmt(ts):
-    return datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+    return datetime.datetime.fromtimestamp(ts, AR_TZ).strftime("%Y-%m-%d %H:%M")
 
 def main():
     aps = cargar_aeropuertos()
@@ -77,11 +87,12 @@ def main():
         id INTEGER PRIMARY KEY AUTOINCREMENT, hex TEXT, matricula TEXT, provincia TEXT,
         inicio INTEGER, fin INTEGER, origen TEXT, destino TEXT,
         dur_min INTEGER, alt_max INTEGER, puntos INTEGER)""")
+    ahora = int(time.time())
     hexes = [r[0] for r in con.execute("SELECT DISTINCT hex FROM snapshots").fetchall()]
     movimientos = []
     for h in hexes:
         snaps = con.execute(
-            "SELECT ts,matricula,provincia,lat,lon,alt_baro FROM snapshots "
+            "SELECT ts,matricula,provincia,lat,lon,alt_baro,gs FROM snapshots "
             "WHERE hex=? AND lat IS NOT NULL ORDER BY ts", (h,)).fetchall()
         if not snaps:
             continue
@@ -98,14 +109,46 @@ def main():
                 continue
             ini, fin = t[0], t[-1]
             matric, prov = ini[1], ini[2]
-            o = aeropuerto_cercano(ini[3], ini[4], aps)
-            d = aeropuerto_cercano(fin[3], fin[4], aps)
             alt_max = max((s[5] or 0) for s in t)
-            dur = round((fin[0]-ini[0])/60)
+
+            # ¿el vuelo terminó? Dos formas de saberlo:
+            #  (a) hace SETTLE_SEG que no recibimos señal => aterrizó / salió de cobertura.
+            #  (b) viene bajo y lento (posado) de forma sostenida al final del tramo.
+            sin_senal = (ahora - fin[0]) >= SETTLE_SEG
+            # buscar la cola "en tierra": puntos finales bajos y lentos.
+            posado = ini      # punto donde tocó tierra (touchdown aprox.)
+            for s in reversed(t):
+                if (s[5] or 0) <= ALT_TIERRA and (s[6] or 0) <= GS_TIERRA:
+                    posado = s
+                else:
+                    break
+            quieto_seg = fin[0] - posado[0]
+            en_tierra = (posado is not ini) and quieto_seg >= QUIETO_SEG
+            finalizado = sin_senal or en_tierra
+
+            o = aeropuerto_cercano(ini[3], ini[4], aps)
+            if not finalizado:
+                # sigue en el aire: no inventamos un aterrizaje.
+                d = {"label": "(en vuelo)", "code": "", "lat": fin[3], "lon": fin[4]}
+                fin_ts = fin[0]
+            elif en_tierra:
+                # tocó tierra: destino = aeropuerto cercano al punto de toque.
+                d = aeropuerto_cercano(posado[3], posado[4], aps)
+                fin_ts = posado[0]
+            else:
+                # sin señal: si la última posición era baja, probablemente aterrizó ahí;
+                # si estaba alto, sólo salió de cobertura (no afirmamos aeropuerto).
+                if (fin[5] or 99999) <= 8000:
+                    d = aeropuerto_cercano(fin[3], fin[4], aps)
+                else:
+                    d = {"label": "(fuera de cobertura)", "code": "", "lat": fin[3], "lon": fin[4]}
+                fin_ts = fin[0]
+
+            dur = round((fin_ts-ini[0])/60)
             con.execute("INSERT INTO vuelos(hex,matricula,provincia,inicio,fin,origen,destino,dur_min,alt_max,puntos) "
                         "VALUES(?,?,?,?,?,?,?,?,?,?)",
-                        (h, matric, prov, ini[0], fin[0], o["label"], d["label"], dur, alt_max, len(t)))
-            movimientos.append([matric, prov, h, fmt(ini[0]), fmt(fin[0]), dur,
+                        (h, matric, prov, ini[0], fin_ts, o["label"], d["label"], dur, alt_max, len(t)))
+            movimientos.append([matric, prov, h, fmt(ini[0]), fmt(fin_ts), dur,
                                 o["label"], d["label"], o["code"], d["code"],
                                 o["lat"], o["lon"], d["lat"], d["lon"], alt_max, len(t)])
     con.commit()

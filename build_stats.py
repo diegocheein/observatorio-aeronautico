@@ -65,7 +65,7 @@ function recompute(){
   const S=(id,v)=>document.getElementById(id).textContent=v;
   const g={};
   base.forEach(f=>{const fch=(f.fin||f.inicio||'').slice(0,10),dst=f.destino;
-    if(!fch||!dst||dst.indexOf('sin aeropuerto')>=0)return;const k=fch+'|'+dst;(g[k]=g[k]||{a:new Set(),p:new Set(),fch,dst});g[k].a.add(f.matricula);if(f.provincia)g[k].p.add(f.provincia);});
+    if(!fch||!dst||dst.charAt(0)==='(')return;const k=fch+'|'+dst;(g[k]=g[k]||{a:new Set(),p:new Set(),fch,dst});g[k].a.add(f.matricula);if(f.provincia)g[k].p.add(f.provincia);});
   let enc=Object.values(g).filter(x=>x.a.size>=3).map(x=>({fch:x.fch,dst:x.dst,a:[...x.a].sort(),p:[...x.p].sort(),n:x.a.size}));
   if(fAero)enc=enc.filter(e=>e.a.includes(fAero));
   enc.sort((x,y)=>y.n-x.n||(x.fch<y.fch?1:-1));
