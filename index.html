@@ -129,7 +129,9 @@ new Chart(document.getElementById('chart'),{type:'line',plugins:[glow],
 // ticker animado
 const tk=document.getElementById('ticker'); let ei=0;
 function renderTicker(){ tk.innerHTML='';
-  for(let i=0;i<8;i++){const t=D.eventos[(ei+i)%D.eventos.length]; if(!t)break;
+  // mostrar como mucho tantos ítems como eventos haya (no repetir si hay pocos)
+  const n=Math.min(8,D.eventos.length);
+  for(let i=0;i<n;i++){const t=D.eventos[(ei+i)%D.eventos.length]; if(!t)break;
     const d=document.createElement('div');d.className='ev'+(t.indexOf('Coincidencia')>=0?' al':'');d.textContent=t;tk.appendChild(d);} }
 if(D.eventos.length){renderTicker(); setInterval(()=>{ei=(ei+1)%D.eventos.length;renderTicker();},2600);}
 else tk.innerHTML='<div class="ev">Sin actividad registrada todavía.</div>';
