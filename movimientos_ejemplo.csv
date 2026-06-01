@@ -1,0 +1,5 @@
+matricula,provincia,hex,inicio,fin,dur_min,origen,destino,origen_code,destino_code,origen_lat,origen_lon,destino_lat,destino_lon,alt_max_ft,puntos
+LQ-KKX,Santiago del Estero,E0B2D8,2026-05-26 10:00,2026-05-26 10:39,39,AEP (Buenos Aires),SDE (Santiago del Estero),SABE,SANE,-34.559419,-58.415536,-27.765556335399996,-64.3099975586,27282,40
+LQ-KKX,Santiago del Estero,E0B2D8,2026-05-26 18:00,2026-05-26 18:39,39,SDE (Santiago del Estero),AEP (Buenos Aires),SANE,SABE,-27.765556335399996,-64.3099975586,-34.559419,-58.415536,27282,40
+LV-KFB,Río Negro,E0B182,2026-05-27 09:30,2026-05-27 10:09,39,BRC (San Carlos de Bariloche),AEP (Buenos Aires),SAZS,SABE,-41.151199,-71.157501,-34.559419,-58.415536,27282,40
+LQ-CPS,Santiago del Estero,E03413,2026-05-30 23:10,2026-05-30 23:49,39,AEP (Buenos Aires),PDP (Punta del Este),SABE,SULS,-34.559419,-58.415536,-34.855099,-55.094299,27282,40

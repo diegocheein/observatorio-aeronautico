@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.hex_cache.json
+.DS_Store
+*.tmp
+test_vuelos.db
+*.zip
+ziFb7LMK
+vuelos.db-journal

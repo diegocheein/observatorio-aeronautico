@@ -1,0 +1,172 @@
+<!doctype html><html lang=es><head><meta charset=utf-8><meta name=viewport content='width=device-width, initial-scale=1'><title>Mapa en vivo — Observatorio Aeronáutico</title><link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/><style>
+ :root{--bg:#071827;--panel:#0E2238;--panel2:#102A43;--bd:#1E3A56;--txt:#F8FAFC;--mut:#94A3B8;
+   --azul:#38BDF8;--verde:#22C55E;--rojo:#EF4444;--amar:#F59E0B}
+ *{box-sizing:border-box}
+ body{margin:0;background:var(--bg);color:var(--txt);font-family:'Segoe UI',system-ui,Arial,sans-serif;
+   background-image:radial-gradient(circle at 50% -5%,rgba(56,189,248,.07),transparent 45%)}
+ a{color:var(--azul);text-decoration:none}
+ .top{display:flex;align-items:center;justify-content:space-between;padding:11px 20px;border-bottom:1px solid var(--bd);
+   background:#081d30;position:sticky;top:0;z-index:1000}
+ .brand{display:flex;align-items:center;gap:11px}
+ .brand .logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#38BDF8,#0b6aa3);
+   display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px #38bdf844}
+ .brand b{font-size:14px;letter-spacing:1.5px;display:block} .brand small{font-size:9.5px;color:var(--mut);letter-spacing:2px}
+ .nav a{font-size:13px;margin-left:15px;color:#bcd3ec} .nav a:hover{color:#fff}
+ .nav a.act{color:#fff;border-bottom:2px solid var(--azul);padding-bottom:4px}
+ .wrap{max-width:1280px;margin:0 auto;padding:18px 20px}
+ .htitle{font-size:21px;font-weight:800;margin:0;letter-spacing:.3px}
+ .hsub{color:var(--mut);font-size:13px;margin:4px 0 16px}
+ .panel{background:var(--panel);border:1px solid var(--bd);border-radius:12px;overflow:hidden;margin-bottom:16px}
+ .ph{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);padding:11px 14px;border-bottom:1px solid var(--bd)}
+ .pb{padding:14px}
+ .filters{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;background:var(--panel);border:1px solid var(--bd);
+   border-radius:12px;padding:12px 14px;margin-bottom:16px}
+ .filters label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);display:block;margin-bottom:4px}
+ .filters select,.filters input{background:var(--panel2);border:1px solid var(--bd);color:var(--txt);border-radius:7px;
+   padding:7px 9px;font-size:13px;min-width:175px}
+ .seg{display:flex;border:1px solid var(--bd);border-radius:7px;overflow:hidden}
+ .seg button{background:var(--panel2);border:none;color:var(--mut);padding:7px 13px;cursor:pointer;font-size:13px;border-right:1px solid var(--bd)}
+ .seg button:last-child{border-right:none} .seg button.act{background:var(--azul);color:#04121f;font-weight:700}
+ .info{color:var(--mut);font-size:12px}
+ .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+ @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+ .kpi{background:var(--panel);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;position:relative;overflow:hidden}
+ .kpi .v{font-size:25px;font-weight:800;line-height:1} .kpi .l{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+ .kpi .bar{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--azul)}
+ .kpi.fly .v{color:var(--rojo)} .kpi.fly .bar{background:var(--rojo)}
+ .kpi.amar .v{color:var(--amar)} .kpi.amar .bar{background:var(--amar)}
+ .kpi.verde .v{color:var(--verde)} .kpi.verde .bar{background:var(--verde)}
+ .two{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media(max-width:820px){.two{grid-template-columns:1fr}}
+ table{border-collapse:collapse;width:100%;font-size:13px}
+ th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--bd)}
+ th{background:var(--panel2);color:#cfe0f0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;position:sticky;top:0}
+ tbody tr:nth-child(even){background:#0c2034}
+ tr.al td{color:var(--amar);font-weight:600}
+ .badge{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:20px;margin:2px 3px 0 0}
+ .b-int{background:rgba(168,85,247,.18);color:#c99bf5}.b-fds{background:rgba(245,158,11,.2);color:#fbd38d}
+ .b-noc{background:rgba(56,189,248,.16);color:#9bdcf7}.b-pri{background:rgba(239,68,68,.18);color:#f5a3a3}
+ .pill{display:inline-block;background:rgba(245,158,11,.2);color:#fbd38d;font-weight:700;font-size:10.5px;padding:1px 8px;border-radius:20px}
+ .scroll{max-height:420px;overflow:auto}
+ #map{height:440px} .leaflet-container{background:#06121f} .leaflet-tooltip{font-size:12px}
+ .note{color:var(--mut);font-size:12px;margin-top:8px} .muted{color:var(--mut);font-size:12px}
+ canvas{max-height:300px}
+</style><style>
+ .filters{margin:14px 20px 0;max-width:none}
+ .mapwrap{position:relative;margin:14px 20px 18px}
+ #map{height:82vh;min-height:560px;border:1px solid var(--bd);border-radius:12px}
+ .fp{position:absolute;top:12px;right:12px;width:310px;max-height:calc(82vh - 24px);overflow:auto;
+   background:rgba(14,34,56,.97);border:1px solid var(--bd);border-radius:12px;z-index:600;display:none;box-shadow:0 10px 30px #0008}
+ .fp .h{padding:11px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+ .fp .h b{font-size:15px} .fp .x{cursor:pointer;color:var(--mut);font-size:18px;line-height:1}
+ .fp .meta{padding:10px 14px;font-size:13px;color:var(--mut);border-bottom:1px solid var(--bd)} .fp .meta b{color:var(--txt)}
+ .fp .ht{padding:9px 14px 4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut)}
+ .fl{padding:9px 14px;border-top:1px solid var(--bd);cursor:pointer} .fl:hover{background:#12304a}
+ .fl.sel{background:#163a59;border-left:3px solid var(--rojo)}
+ .fl .r{color:#fff;font-weight:600;font-size:13px} .fl .d{color:var(--mut);font-size:12px;margin-top:2px}
+ .tag{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:9px;margin:4px 3px 0 0}
+ .t-int{background:rgba(168,85,247,.2);color:#c99bf5}.t-fds{background:rgba(245,158,11,.22);color:#fbd38d}.t-noc{background:rgba(56,189,248,.18);color:#9bdcf7}
+ .plane{transition:transform .3s} .plane.fly{filter:drop-shadow(0 0 7px #EF4444);animation:pp 2s infinite}
+ @keyframes pp{50%{opacity:.45}} .flow{stroke-dasharray:6 10;animation:flow 1.2s linear infinite}@keyframes flow{to{stroke-dashoffset:-32}}
+ .btn{background:var(--azul);color:#04121f;border:none;border-radius:7px;padding:8px 13px;font-size:13px;font-weight:700;cursor:pointer}
+ .btn.alt{background:var(--panel2);color:var(--txt);border:1px solid var(--bd);font-weight:400}
+</style></head><body><div class="top"><div class="brand"><div class="logo"><svg width="17" height="17" viewBox="0 0 24 24"><path d="M12 2 L14 11 L22 15 L22 17 L14 14.5 L13.5 20 L16 21.5 L16 23 L12 22 L8 23 L8 21.5 L10.5 20 L10 14.5 L2 17 L2 15 L10 11 Z" fill="#04121f"/></svg></div><div><b>OBSERVATORIO AERONÁUTICO</b><small>AERONAVES OFICIALES · ARGENTINA</small></div></div><div class="nav"><a href="index.html" class="">Inicio</a><a href="mapa_vivo.html" class="act">Mapa en vivo</a><a href="reporte_movimientos.html" class="">Reporte histórico</a><a href="estadisticas.html" class="">Estadísticas y alertas</a><a href="ayuda.html" class="">Metodología</a></div></div>
+<div class="filters">
+  <div><label>Mostrar</label><select id="scope"><option value="">Todas las aeronaves</option></select></div>
+  <div><label>Aeronave</label><select id="plane"><option value="">— elegí una —</option></select></div>
+  <div><label>Historial desde</label><input type="date" id="desde"></div>
+  <div><label>Hasta</label><input type="date" id="hasta"></div>
+  <button class="btn" id="btnLive">Actualizar en vivo</button>
+  <button class="btn alt" id="btnReset">Limpiar</button>
+  <span class="info" id="info" style="margin-left:auto"></span>
+</div>
+<div class="mapwrap">
+  <div id="map"></div>
+  <div class="fp" id="fp">
+    <div class="h"><b id="fp-m"></b><span class="x" id="fp-x">×</span></div>
+    <div class="meta" id="fp-meta"></div>
+    <div class="ht">Historial de vuelos</div>
+    <div id="fp-fl"></div>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const D={"aircraft": [{"matricula": "LV-WNS", "hex": "E17393", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "MBB/Kawasaki BK-117 C-1", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WRW", "hex": "E17497", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "MBB/Kawasaki BK-117 C-1", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-YBT", "hex": "E19094", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Eurocopter EC-135 T1", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WEJ", "hex": "E1714A", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 550 Citation II", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-APX", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "MBB BO-105 CBS", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WMI", "hex": "E17349", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 208B Grand Caravan", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 208B Grand Caravan", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MRU", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 441 Conquest", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MMY", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 441 Conquest", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MRT", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Cessna 441 Conquest", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WHI", "hex": "", "grupo": "provincial", "provincia": "Buenos Aires", "tipo": "Eurocopter BO-105 CBS-4", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-JWN", "hex": "E0A5CE", "grupo": "provincial", "provincia": "Catamarca", "tipo": "Learjet 75", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-CIO", "hex": "E0324F", "grupo": "privado", "provincia": "Chaco", "tipo": "Learjet 60", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MDN", "hex": "E0D10E", "grupo": "provincial", "provincia": "Chaco", "tipo": "Rockwell 690B Turbo Commander", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-CKA", "hex": "E032C1", "grupo": "provincial", "provincia": "Chubut", "tipo": "Learjet 60XR", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BEM", "hex": "E0214D", "grupo": "provincial", "provincia": "Chubut", "tipo": "Hawker 400XP", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WPB", "hex": "E17402", "grupo": "provincial", "provincia": "Chubut", "tipo": "Beechcraft King Air C90B", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-FUT", "hex": "E06554", "grupo": "privado", "provincia": "Chubut", "tipo": "Learjet 60", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-HBQ", "hex": "E08091", "grupo": "provincial", "provincia": "Córdoba", "tipo": "Learjet 60", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BAN", "hex": "E0204E", "grupo": "provincial", "provincia": "Córdoba", "tipo": "Beechcraft Super King Air 350 (B300)", "lat": -27.7656, "lon": -64.31, "track": 0, "flying": false}, {"matricula": "LV-KOW", "hex": "", "grupo": "provincial", "provincia": "Córdoba", "tipo": "Air Tractor AT-802 (Fuego)", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WJO", "hex": "E1728F", "grupo": "provincial", "provincia": "Corrientes", "tipo": "Cessna 550 Citation II", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-WYR", "hex": "E17652", "grupo": "provincial", "provincia": "Corrientes", "tipo": "Cessna 208B Grand Caravan", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-ZNU", "hex": "E1A395", "grupo": "provincial", "provincia": "Corrientes", "tipo": "Cessna 208B Grand Caravan", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BDI", "hex": "", "grupo": "provincial", "provincia": "Corrientes", "tipo": "Bell 407", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BII", "hex": "", "grupo": "provincial", "provincia": "Entre Ríos", "tipo": "Bell 427", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BIV", "hex": "E02256", "grupo": "provincial", "provincia": "Formosa", "tipo": "Cessna 208B Grand Caravan", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BMH", "hex": "E02348", "grupo": "provincial", "provincia": "Jujuy", "tipo": "Cessna Citation Excel", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-KOR", "hex": "", "grupo": "provincial", "provincia": "Jujuy", "tipo": "Learjet 31A", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-HVN", "hex": "", "grupo": "provincial", "provincia": "Jujuy", "tipo": "Airbus H125", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-JVH", "hex": "", "grupo": "provincial", "provincia": "La Pampa", "tipo": "Learjet 60", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-WTN", "hex": "E1750E", "grupo": "provincial", "provincia": "La Rioja", "tipo": "Cessna 650 Citation VII", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-YLC", "hex": "E19303", "grupo": "privado", "provincia": "La Rioja", "tipo": "Beechcraft King Air B350", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "Mendoza", "tipo": "Avión sanitario (a confirmar tipo)", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "Misiones", "tipo": "Eurocopter EC130 B4", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-WHT", "hex": "E17214", "grupo": "provincial", "provincia": "Misiones", "tipo": "Bell 206B JetRanger II", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BBG", "hex": "E1028C", "grupo": "privado", "provincia": "Misiones", "tipo": "Hawker 125-800XP", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-AXO", "hex": "E0160F", "grupo": "provincial", "provincia": "Neuquén", "tipo": "Beechcraft B200 King Air", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BDM", "hex": "E0210D", "grupo": "provincial", "provincia": "Neuquén", "tipo": "Learjet 31A", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-CIP", "hex": "E03250", "grupo": "provincial", "provincia": "Neuquén", "tipo": "Bell 429", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BBR", "hex": "E02092", "grupo": "provincial", "provincia": "Neuquén", "tipo": "Bell 407", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-KFB", "hex": "E0B182", "grupo": "provincial", "provincia": "Río Negro", "tipo": "Cessna Citation V Ultra", "lat": -27.7656, "lon": -64.31, "track": 0, "flying": false}, {"matricula": "LV-ARD", "hex": "E01484", "grupo": "provincial", "provincia": "Salta", "tipo": "Learjet 45XR", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BXD", "hex": "E02604", "grupo": "provincial", "provincia": "Salta", "tipo": "Learjet 45", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-IJK", "hex": "E0928B", "grupo": "provincial", "provincia": "San Juan", "tipo": "Learjet 75", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-YHC", "hex": "E19203", "grupo": "provincial", "provincia": "San Juan", "tipo": "Cessna 550 Citation II", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BHT", "hex": "", "grupo": "provincial", "provincia": "San Juan", "tipo": "Bell 407", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "San Luis", "tipo": "(a relevar)", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-KJY", "hex": "E0B299", "grupo": "provincial", "provincia": "Santa Cruz", "tipo": "Pilatus PC-24", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BIN", "hex": "", "grupo": "provincial", "provincia": "Santa Fe", "tipo": "Eurocopter AS350 B2", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-CLE", "hex": "", "grupo": "provincial", "provincia": "Santa Fe", "tipo": "Beechcraft Baron 58P", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-FKW", "hex": "", "grupo": "provincial", "provincia": "Santa Fe", "tipo": "Beechcraft Baron 58P", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "Santa Fe", "tipo": "Agusta AW109", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "Santa Fe", "tipo": "Air Tractor AT-802 Fire Boss", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-KKX", "hex": "E0B2D8", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Beechcraft Super King Air 200", "lat": -27.7656, "lon": -64.31, "track": 0, "flying": false}, {"matricula": "LQ-CPS", "hex": "E03413", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Learjet 45", "lat": -34.855, "lon": -55.094, "track": 0, "flying": false}, {"matricula": "LV-KJS", "hex": "", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Boeing 737 Fireliner (hidrante)", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BFS", "hex": "E02193", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Learjet 40", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-ZRB", "hex": "E1A482", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Raytheon King Air C90A", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-BIZ", "hex": "", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Bell 427", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LQ-ZNT", "hex": "", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Bell 206B JetRanger II", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MIS", "hex": "E0D253", "grupo": "provincial", "provincia": "Santiago del Estero", "tipo": "Pilatus PC-6 Turbo Porter", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-AIT", "hex": "E01254", "grupo": "provincial", "provincia": "Tierra del Fuego", "tipo": "Gates Learjet 35A", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-MTP", "hex": "E0D510", "grupo": "provincial", "provincia": "Tierra del Fuego", "tipo": "IAI-201 Arava", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-BEU", "hex": "E02155", "grupo": "provincial", "provincia": "Tucumán", "tipo": "Cessna 550B Citation Bravo", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "", "hex": "", "grupo": "provincial", "provincia": "CABA", "tipo": "(a relevar)", "lat": null, "lon": null, "track": 0, "flying": false}, {"matricula": "LV-SYG", "hex": "", "grupo": "privado", "provincia": "AFA / fútbol", "tipo": "Gulfstream G400 (GLF4)", "lat": null, "lon": null, "track": 0, "flying": false}], "hist": {"LQ-KKX": [{"inicio": "2026-05-26 10:00", "fin": "2026-05-26 10:39", "dur": "39", "origen": "AEP (Buenos Aires)", "destino": "SDE (Santiago del Estero)", "olat": -34.559419, "olon": -58.415536, "dlat": -27.765556335399996, "dlon": -64.3099975586}, {"inicio": "2026-05-26 18:00", "fin": "2026-05-26 18:39", "dur": "39", "origen": "SDE (Santiago del Estero)", "destino": "AEP (Buenos Aires)", "olat": -27.765556335399996, "olon": -64.3099975586, "dlat": -34.559419, "dlon": -58.415536}, {"inicio": "2026-05-28 11:00", "fin": "2026-05-28 11:39", "dur": "39", "origen": "AEP (Buenos Aires)", "destino": "SDE (Santiago del Estero)", "olat": -34.559419, "olon": -58.415536, "dlat": -27.765556335399996, "dlon": -64.3099975586}], "LV-KFB": [{"inicio": "2026-05-27 09:30", "fin": "2026-05-27 10:09", "dur": "39", "origen": "BRC (San Carlos de Bariloche)", "destino": "AEP (Buenos Aires)", "olat": -41.151199, "olon": -71.157501, "dlat": -34.559419, "dlon": -58.415536}, {"inicio": "2026-05-28 11:30", "fin": "2026-05-28 12:09", "dur": "39", "origen": "BRC (San Carlos de Bariloche)", "destino": "SDE (Santiago del Estero)", "olat": -41.151199, "olon": -71.157501, "dlat": -27.765556335399996, "dlon": -64.3099975586}], "LQ-BAN": [{"inicio": "2026-05-28 12:00", "fin": "2026-05-28 12:39", "dur": "39", "origen": "COR (Cordoba)", "destino": "SDE (Santiago del Estero)", "olat": -31.312346, "olon": -64.208329, "dlat": -27.765556335399996, "dlon": -64.3099975586}], "LQ-CPS": [{"inicio": "2026-05-30 23:10", "fin": "2026-05-30 23:49", "dur": "39", "origen": "AEP (Buenos Aires)", "destino": "PDP (Punta del Este)", "olat": -34.559419, "olon": -58.415536, "dlat": -34.855099, "dlon": -55.094299}]}, "hexes": ["E17393", "E17497", "E19094", "E1714A", "E17349", "E0A5CE", "E0324F", "E0D10E", "E032C1", "E0214D", "E17402", "E06554", "E08091", "E0204E", "E1728F", "E17652", "E1A395", "E02256", "E02348", "E1750E", "E19303", "E17214", "E1028C", "E0160F", "E0210D", "E03250", "E02092", "E0B182", "E01484", "E02604", "E0928B", "E19203", "E0B299", "E0B2D8", "E03413", "E02193", "E1A482", "E0D253", "E01254", "E0D510", "E02155"]}; const byReg={}; D.aircraft.forEach(a=>byReg[a.matricula]=a);
+const map=L.map('map',{attributionControl:false}).setView([-40,-63],4);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{maxZoom:11}).addTo(map);
+const ley=L.control({position:'bottomleft'});
+ley.onAdd=function(){const d=L.DomUtil.create('div');
+  d.style.cssText='background:rgba(8,29,48,.9);color:#e8eef5;padding:8px 11px;border-radius:9px;font:12px Arial;line-height:1.5;border:1px solid #1E3A56';
+  d.innerHTML='<b>En vivo</b><br><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#EF4444;margin-right:6px"></span>volando ahora<br><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#38BDF8;margin-right:6px"></span>última posición';
+  return d;};
+ley.addTo(map);
+function planeIcon(c,t,f){const s=`<svg class="plane${f?' fly':''}" width="${f?26:20}" height="${f?26:20}" viewBox="0 0 24 24" style="transform:rotate(${t||0}deg);opacity:${f?1:.7}">
+ <path d="M12 2 L14 11 L22 15 L22 17 L14 14.5 L13.5 20 L16 21.5 L16 23 L12 22 L8 23 L8 21.5 L10.5 20 L10 14.5 L2 17 L2 15 L10 11 Z" fill="${c}" stroke="#06121f" stroke-width="0.6"/></svg>`;
+ return L.divIcon({html:s,className:'',iconSize:[26,26],iconAnchor:[13,13]});}
+function bearing(a,b){const r=Math.PI/180,y=Math.sin((b[1]-a[1])*r)*Math.cos(b[0]*r);
+ const x=Math.cos(a[0]*r)*Math.sin(b[0]*r)-Math.sin(a[0]*r)*Math.cos(b[0]*r)*Math.cos((b[1]-a[1])*r);return (Math.atan2(y,x)*180/Math.PI+360)%360;}
+function arrowIcon(d){const s=`<svg width="20" height="20" viewBox="0 0 24 24" style="transform:rotate(${d}deg)"><path d="M12 3 L19 18 L12 14 L5 18 Z" fill="#7e93a8" stroke="#06121f" stroke-width="0.8"/></svg>`;
+ return L.divIcon({html:s,className:'',iconSize:[20,20],iconAnchor:[10,10]});}
+let markers={},routeLayers=[],SCOPE="",curReg=null;
+function inScope(a){if(!SCOPE)return true;if(SCOPE==="G:privado")return a.grupo==="privado";
+ if(SCOPE.startsWith("P:"))return a.grupo!=="privado"&&a.provincia===SCOPE.slice(2);return true;}
+function draw(){Object.values(markers).forEach(m=>map.removeLayer(m));markers={};
+ D.aircraft.forEach(a=>{if(a.lat==null||!inScope(a))return;const col=a.flying?'#EF4444':'#38BDF8';
+  const m=L.marker([a.lat,a.lon],{icon:planeIcon(col,a.track,a.flying),zIndexOffset:a.flying?1000:0}).addTo(map);
+  m.on('click',()=>selectAircraft(a.matricula,true));
+  m.bindTooltip(`<b>${a.matricula}</b> · ${a.provincia}<br>${a.tipo}<br>${a.flying?'<b style="color:#EF4444">EN VUELO</b>':'en tierra (últ. posición)'}`,{direction:'top',offset:[0,-8]});
+  markers[a.matricula]=m;});}
+function clearRoute(){routeLayers.forEach(l=>map.removeLayer(l));routeLayers=[];}
+function drawRoute(o,d){const ln=L.polyline([o,d],{color:'#7e93a8',weight:3,opacity:.9}).addTo(map);routeLayers.push(ln);
+ const b=bearing(o,d);[0.3,0.55,0.8].forEach(fr=>routeLayers.push(L.marker([o[0]+(d[0]-o[0])*fr,o[1]+(d[1]-o[1])*fr],{icon:arrowIcon(b),interactive:false}).addTo(map)));
+ routeLayers.push(L.circleMarker(o,{radius:4,color:'#22C55E',fillColor:'#22C55E',fillOpacity:1}).addTo(map).bindTooltip('Origen'));
+ routeLayers.push(L.circleMarker(d,{radius:4,color:'#EF4444',fillColor:'#EF4444',fillOpacity:1}).addTo(map).bindTooltip('Destino'));
+ map.fitBounds(ln.getBounds(),{padding:[60,60]});}
+function fillScope(){const s=document.getElementById('scope');
+ [...new Set(D.aircraft.filter(a=>a.grupo!=='privado'&&a.provincia).map(a=>a.provincia))].sort()
+   .forEach(p=>{const o=document.createElement('option');o.value='P:'+p;o.textContent='Provincia: '+p;s.appendChild(o);});
+ if(D.aircraft.some(a=>a.grupo==='privado')){const o=document.createElement('option');o.value='G:privado';o.textContent='Privadas / rentadas';s.appendChild(o);}}
+function fillPlanes(){const sel=document.getElementById('plane');sel.innerHTML='<option value="">— elegí una —</option>';
+ D.aircraft.filter(a=>a.matricula&&inScope(a)).sort((x,y)=>x.provincia.localeCompare(y.provincia)||x.matricula.localeCompare(y.matricula))
+  .forEach(a=>{const o=document.createElement('option');o.value=a.matricula;o.textContent=`${a.matricula} — ${a.provincia}`;sel.appendChild(o);});}
+function dr(){return [document.getElementById('desde').value,document.getElementById('hasta').value];}
+function enforceYear(){let[a,b]=dr();if(!a||!b)return;const da=new Date(a),db=new Date(b);
+ if(db<da){document.getElementById('desde').value=b;return;}
+ if((db-da)/86400000>366){const na=new Date(db);na.setFullYear(na.getFullYear()-1);
+  document.getElementById('desde').value=na.toISOString().slice(0,10);alert('El historial admite como máximo 1 año. Ajusté la fecha "desde".');}}
+function flags(f){const out=[];const d=new Date((f.inicio||'').replace(' ','T'));
+ if(!isNaN(d)){const w=d.getDay();if(w===0||w===6)out.push(['t-fds','fin de semana']);const h=d.getHours();if(h>=22||h<6)out.push(['t-noc','nocturno']);}
+ return out;}
+function showFlights(reg){const box=document.getElementById('fp-fl');box.innerHTML='';
+ const[a,b]=dr();let hs=(D.hist[reg]||[]);if(a)hs=hs.filter(f=>(f.inicio||'').slice(0,10)>=a);if(b)hs=hs.filter(f=>(f.inicio||'').slice(0,10)<=b);
+ if(!hs.length){box.innerHTML='<div class="fl d" style="color:var(--mut)">Sin vuelos en el período.</div>';return;}
+ hs.forEach(f=>{const el=document.createElement('div');el.className='fl';
+  const tg=flags(f).map(([c,t])=>`<span class="tag ${c}">${t}</span>`).join('');
+  el.innerHTML=`<div class="r">${f.origen} → ${f.destino}</div><div class="d">${f.inicio} · ${f.dur} min</div>${tg}`;
+  el.onclick=()=>{document.querySelectorAll('.fl').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');clearRoute();if(f.olat&&f.dlat)drawRoute([f.olat,f.olon],[f.dlat,f.dlon]);};
+  box.appendChild(el);});}
+function selectAircraft(reg,fromMap){const a=byReg[reg];if(!a)return;curReg=reg;
+ document.getElementById('plane').value=reg;
+ document.getElementById('fp-m').textContent=a.matricula;
+ document.getElementById('fp-meta').innerHTML=`<span class="tag" style="background:#12304a;color:#cfe0f0">${a.grupo==='privado'?'privada/rentada':'provincial'}</span><br>${a.grupo==='privado'?'Ámbito':'Provincia'}: <b>${a.provincia}</b><br>Tipo: <b>${a.tipo}</b><br>Hex: ${a.hex||'—'}`;
+ showFlights(reg);clearRoute();document.getElementById('fp').style.display='block';
+ if(a.lat!=null){if(!fromMap)map.setView([a.lat,a.lon],7);if(markers[reg])markers[reg].openTooltip();}}
+function fitScope(){const pts=D.aircraft.filter(a=>a.lat!=null&&inScope(a)).map(a=>[a.lat,a.lon]);if(pts.length)map.fitBounds(pts,{padding:[40,40]});else map.setView([-40,-63],4);}
+function closePanel(){document.getElementById('fp').style.display='none';clearRoute();curReg=null;document.getElementById('plane').value='';}
+function resetView(){closePanel();SCOPE='';document.getElementById('scope').value='';fillPlanes();draw();fitScope();
+ document.getElementById('info').textContent='';}
+document.getElementById('fp-x').onclick=closePanel;
+document.getElementById('scope').onchange=e=>{SCOPE=e.target.value;closePanel();fillPlanes();draw();fitScope();
+ document.getElementById('info').textContent=D.aircraft.filter(a=>inScope(a)&&a.lat!=null).length+' en el mapa';};
+document.getElementById('plane').onchange=e=>{if(e.target.value)selectAircraft(e.target.value);else closePanel();};
+document.getElementById('btnReset').onclick=resetView;
+['desde','hasta'].forEach(id=>document.getElementById(id).onchange=()=>{enforceYear();if(curReg)showFlights(curReg);});
+async function live(){const btn=document.getElementById('btnLive');btn.textContent='Consultando…';let ok=0;
+ try{for(let i=0;i<D.hexes.length;i+=100){const res=await fetch('https://api.airplanes.live/v2/hex/'+D.hexes.slice(i,i+100).join(','));
+  const j=await res.json();(j.ac||[]).forEach(ac=>{const hx=(ac.hex||'').toUpperCase();const a=D.aircraft.find(x=>x.hex===hx);
+   if(a&&ac.lat!=null){a.lat=ac.lat;a.lon=ac.lon;a.track=ac.track||0;a.flying=true;ok++;}});}
+  draw();btn.textContent=`En vivo: ${ok} volando`;}catch(e){btn.textContent='Sin conexión · reintentar';}}
+document.getElementById('btnLive').onclick=live;
+(function(){const h=new Date(),d=new Date();d.setFullYear(d.getFullYear()-1);
+ document.getElementById('hasta').value=h.toISOString().slice(0,10);document.getElementById('desde').value=d.toISOString().slice(0,10);})();
+fillScope();fillPlanes();draw();fitScope();
+</script></body></html>
