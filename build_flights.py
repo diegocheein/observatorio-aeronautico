@@ -22,6 +22,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 DB = os.environ.get("PADRON_DB", os.path.join(BASE, "vuelos.db"))
 AIRPORTS = os.path.join(BASE, "airports_ar.csv")
 OUT = os.path.join(BASE, "movimientos.csv")
+HISTORIAL = os.path.join(BASE, "historial_opensky.csv")   # backfill OpenSky (opcional)
 GAP_MIN = 30          # minutos sin señal => nuevo tramo
 RADIO_KM = 25         # radio máx. para asignar un aeropuerto
 MIN_PUNTOS = 3        # tramos con menos puntos se descartan (ruido)
@@ -62,6 +63,11 @@ def fmt(ts):
 def main():
     aps = cargar_aeropuertos()
     con = sqlite3.connect(DB)
+    # snapshots puede no existir todavía (si el poller nunca corrió): la creamos vacía
+    # para poder generar igual el historial de OpenSky sin datos en vivo.
+    con.execute("""CREATE TABLE IF NOT EXISTS snapshots(
+        ts INTEGER, hex TEXT, matricula TEXT, provincia TEXT,
+        lat REAL, lon REAL, alt_baro INTEGER, gs REAL, track REAL, flight TEXT)""")
     con.execute("""CREATE TABLE IF NOT EXISTS vuelos(
         id INTEGER PRIMARY KEY AUTOINCREMENT, hex TEXT, matricula TEXT, provincia TEXT,
         inicio INTEGER, fin INTEGER, origen TEXT, destino TEXT,
@@ -99,14 +105,31 @@ def main():
                                 o["label"], d["label"], o["code"], d["code"],
                                 o["lat"], o["lon"], d["lat"], d["lon"], alt_max, len(t)])
     con.commit()
-    movimientos.sort(key=lambda x:x[3])
+
+    COLS = ["matricula","provincia","hex","inicio","fin","dur_min","origen","destino",
+            "origen_code","destino_code","origen_lat","origen_lon","destino_lat","destino_lon",
+            "alt_max_ft","puntos"]
+
+    # --- fusionar historial de OpenSky (backfill), si existe ---
+    # Clave de deduplicación: (hex, inicio) — evita duplicar un vuelo ya detectado en vivo.
+    claves = {(str(m[2]).upper(), str(m[3])) for m in movimientos}
+    extra = 0
+    if os.path.exists(HISTORIAL):
+        for r in csv.DictReader(open(HISTORIAL, encoding="utf-8")):
+            k = ((r.get("hex") or "").upper(), r.get("inicio") or "")
+            if k in claves or not k[0]:
+                continue
+            claves.add(k)
+            movimientos.append([r.get(c, "") for c in COLS])
+            extra += 1
+
+    movimientos.sort(key=lambda x: x[3])
     with open(OUT,"w",newline="",encoding="utf-8") as f:
         w = csv.writer(f)
-        w.writerow(["matricula","provincia","hex","inicio","fin","dur_min","origen","destino",
-                    "origen_code","destino_code","origen_lat","origen_lon","destino_lat","destino_lon",
-                    "alt_max_ft","puntos"])
+        w.writerow(COLS)
         w.writerows(movimientos)
-    print(f"Vuelos detectados: {len(movimientos)} -> {os.path.basename(OUT)}")
+    suf = f" (incluye {extra} de OpenSky)" if extra else ""
+    print(f"Vuelos detectados: {len(movimientos)}{suf} -> {os.path.basename(OUT)}")
     for m in movimientos[:20]:
         print(f"  {m[3]}  {m[0]:8} {m[1]:16} {m[6]:28} -> {m[7]}")
 
