@@ -32,6 +32,8 @@ SETTLE_SEG = 20 * 60  # sin señal nueva por 20 min => el vuelo terminó
 ALT_TIERRA = 3000     # ft: por debajo se considera bajo (aproximación/tierra)
 GS_TIERRA  = 80       # kt: por debajo se considera lento (tierra/taxi)
 QUIETO_SEG = 5 * 60   # tiene que estar bajo+lento al menos 5 min para contarlo posado
+RADIO_EST  = 200      # km: radio para ESTIMAR el aeropuerto si perdió señal en descenso
+BAJANDO_FT = 3000     # ft de descenso (en ~5 min) para considerar que venía aterrizando
 
 # Hora local de Argentina (UTC-3, sin horario de verano). El VPS corre en UTC,
 # así que convertimos a -3 para que la actividad muestre la hora argentina.
@@ -55,13 +57,18 @@ def cargar_aeropuertos():
                 continue
     return aps
 
-def aeropuerto_cercano(lat, lon, aps):
+def aeropuerto_cercano(lat, lon, aps, solo_reales=False, radio=RADIO_KM):
+    """Aeropuerto más cercano dentro de 'radio' km.
+    solo_reales=True considera únicamente aeropuertos con código IATA
+    (descarta campos/estancias chicos) — útil para *estimar* dónde aterrizó."""
     best, bestd = None, 1e9
     for icao, iata, ciudad, la, lo in aps:
+        if solo_reales and not (iata or "").strip():
+            continue
         d = haversine(lat, lon, la, lo)
         if d < bestd:
             best, bestd = (icao, iata, ciudad, la, lo), d
-    if best and bestd <= RADIO_KM:
+    if best and bestd <= radio:
         icao, iata, ciudad, la, lo = best
         etq = iata or icao
         return {"label": f"{etq} ({ciudad})", "code": icao, "lat": la, "lon": lo}
@@ -136,10 +143,21 @@ def main():
                 d = aeropuerto_cercano(posado[3], posado[4], aps)
                 fin_ts = posado[0]
             else:
-                # sin señal: si la última posición era baja, probablemente aterrizó ahí;
-                # si estaba alto, sólo salió de cobertura (no afirmamos aeropuerto).
-                if (fin[5] or 99999) <= 8000:
-                    d = aeropuerto_cercano(fin[3], fin[4], aps)
+                # sin señal: el avión desapareció del radar. Si venía BAJANDO (aproximación)
+                # o ya estaba bajo, suponemos que aterrizó en el aeropuerto REAL más cercano
+                # (p.ej. su cabecera). Si estaba alto y nivelado, sólo salió de cobertura.
+                alt_fin = fin[5]
+                alt_prev = next((s[5] for s in reversed(t)
+                                 if fin[0]-s[0] >= 300 and s[5] is not None), None)
+                bajando = (alt_fin is not None and alt_prev is not None
+                           and (alt_prev - alt_fin) >= BAJANDO_FT)
+                bajo = (alt_fin is not None and alt_fin <= 8000)
+                if bajando or bajo:
+                    d = aeropuerto_cercano(fin[3], fin[4], aps, solo_reales=True, radio=RADIO_EST)
+                    if d["code"]:
+                        d = dict(d); d["label"] = d["label"] + " · estimado"
+                    else:
+                        d = {"label": "(fuera de cobertura)", "code": "", "lat": fin[3], "lon": fin[4]}
                 else:
                     d = {"label": "(fuera de cobertura)", "code": "", "lat": fin[3], "lon": fin[4]}
                 fin_ts = fin[0]

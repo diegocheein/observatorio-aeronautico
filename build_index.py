@@ -91,7 +91,8 @@ for f in flights:
     # —"(fuera de cobertura)", "(sin aeropuerto cercano)"— no son aeropuertos).
     real_dst = bool(dst) and not dst.startswith("(")
     if f["fin"] and real_dst:
-        ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
+        suf = " (est.)" if "estimado" in dst.lower() else ""
+        ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}{suf}'))
 g=collections.defaultdict(lambda:{"a":set(),"lbl":"","f":""})
 for f in flights:
     fch=(f["fin"] or f["inicio"] or "")[:10]; dst=f["destino"]
