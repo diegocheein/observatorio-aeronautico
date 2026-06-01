@@ -69,11 +69,14 @@ def main():
     con.execute("""CREATE TABLE IF NOT EXISTS snapshots(
         ts INTEGER, hex TEXT, matricula TEXT, provincia TEXT,
         lat REAL, lon REAL, alt_baro INTEGER, gs REAL, track REAL, flight TEXT)""")
-    con.execute("""CREATE TABLE IF NOT EXISTS vuelos(
+    # La tabla 'vuelos' la "posee" este script. El poller puede haber creado una
+    # versión vieja sin columnas origen/destino: la recreamos siempre para
+    # garantizar el esquema correcto (en vez de DELETE, que no migra columnas).
+    con.execute("DROP TABLE IF EXISTS vuelos")
+    con.execute("""CREATE TABLE vuelos(
         id INTEGER PRIMARY KEY AUTOINCREMENT, hex TEXT, matricula TEXT, provincia TEXT,
         inicio INTEGER, fin INTEGER, origen TEXT, destino TEXT,
         dur_min INTEGER, alt_max INTEGER, puntos INTEGER)""")
-    con.execute("DELETE FROM vuelos")
     hexes = [r[0] for r in con.execute("SELECT DISTINCT hex FROM snapshots").fetchall()]
     movimientos = []
     for h in hexes:
