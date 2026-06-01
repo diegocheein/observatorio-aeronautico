@@ -80,7 +80,7 @@
  <div class="panel"><div class="ph">Actividad por provincia</div><div class="pb"><canvas id="cProv"></canvas></div></div>
 </div>
 <script>
-const FL=[{"matricula": "LQ-BFS", "provincia": "Santiago del Estero", "inicio": "2026-06-01 20:52", "fin": "2026-06-01 21:41", "origen": "AR-0786 (Estancia Las Cabezas)", "destino": "(en ruta / sin aeropuerto cercano)", "dcode": ""}]; let period='all',fAero='',fProv='';
+const FL=[{"matricula": "LQ-BFS", "provincia": "Santiago del Estero", "inicio": "2026-06-01 17:52", "fin": "2026-06-01 18:41", "origen": "AR-0786 (Estancia Las Cabezas)", "destino": "(fuera de cobertura)", "dcode": ""}]; let period='all',fAero='',fProv='';
 const dt=s=>new Date((s||'').slice(0,10)+'T12:00');
 const esFds=s=>{const d=new Date((s||'').replace(' ','T'));return !isNaN(d)&&(d.getDay()===0||d.getDay()===6);};
 const esInt=c=>!!c&&!c.startsWith('SA');
@@ -104,7 +104,7 @@ function recompute(){
   const S=(id,v)=>document.getElementById(id).textContent=v;
   const g={};
   base.forEach(f=>{const fch=(f.fin||f.inicio||'').slice(0,10),dst=f.destino;
-    if(!fch||!dst||dst.indexOf('sin aeropuerto')>=0)return;const k=fch+'|'+dst;(g[k]=g[k]||{a:new Set(),p:new Set(),fch,dst});g[k].a.add(f.matricula);if(f.provincia)g[k].p.add(f.provincia);});
+    if(!fch||!dst||dst.charAt(0)==='(')return;const k=fch+'|'+dst;(g[k]=g[k]||{a:new Set(),p:new Set(),fch,dst});g[k].a.add(f.matricula);if(f.provincia)g[k].p.add(f.provincia);});
   let enc=Object.values(g).filter(x=>x.a.size>=3).map(x=>({fch:x.fch,dst:x.dst,a:[...x.a].sort(),p:[...x.p].sort(),n:x.a.size}));
   if(fAero)enc=enc.filter(e=>e.a.includes(fAero));
   enc.sort((x,y)=>y.n-x.n||(x.fch<y.fch?1:-1));
