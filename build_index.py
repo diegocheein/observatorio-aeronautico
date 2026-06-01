@@ -86,11 +86,9 @@ for f in flights:
     # No inventar un aterrizaje: mostrar que va en camino.
     en_ruta = (not dst) or ("sin aeropuerto" in dst)
     if f["inicio"]: ev.append((f["inicio"], f'{f["inicio"][11:16]}  {f["matricula"]} despegó de {corto(f["origen"])}'))
-    if f["fin"]:
-        if en_ruta:
-            ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} en vuelo · va en camino'))
-        else:
-            ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
+    # Solo registrar aterrizaje si hay aeropuerto de destino real (no si sigue en ruta).
+    if f["fin"] and not en_ruta:
+        ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
 g=collections.defaultdict(lambda:{"a":set(),"lbl":"","f":""})
 for f in flights:
     fch=(f["fin"] or f["inicio"] or "")[:10]; dst=f["destino"]
