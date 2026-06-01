@@ -31,6 +31,7 @@ def cargar_padron():
 
 def init_db():
     c = sqlite3.connect(DB)
+    c.execute("PRAGMA busy_timeout=10000")   # esperar hasta 10s si la base está ocupada
     c.executescript("""
     CREATE TABLE IF NOT EXISTS snapshots(
         ts INTEGER, hex TEXT, matricula TEXT, provincia TEXT,

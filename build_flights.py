@@ -63,6 +63,7 @@ def fmt(ts):
 def main():
     aps = cargar_aeropuertos()
     con = sqlite3.connect(DB)
+    con.execute("PRAGMA busy_timeout=10000")   # esperar si el poller está escribiendo
     # snapshots puede no existir todavía (si el poller nunca corrió): la creamos vacía
     # para poder generar igual el historial de OpenSky sin datos en vivo.
     con.execute("""CREATE TABLE IF NOT EXISTS snapshots(

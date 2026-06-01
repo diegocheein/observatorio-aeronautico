@@ -1,19 +1,19 @@
-name: Recolectar y publicar
+name: Publicar en GitHub Pages
 
-# Recolecta una muestra en vivo, reconstruye los reportes y publica el sitio en GitHub Pages.
-# NOTA: GitHub Actions no garantiza ejecución exacta al minuto y el cron mínimo real ronda
-# los 5-15 min, así que la cobertura es parcial. Para captura 24/7 confiable, correr poller.py
-# en un VPS. Este workflow sirve para publicar el sitio y sumar muestras periódicas.
+# El VPS (DigitalOcean) recolecta datos ADS-B 24/7 con poller.py, reconstruye el
+# sitio y commitea el HTML ya generado. Este workflow NO recolecta ni commitea:
+# solo toma el HTML que el VPS empuja y lo publica en GitHub Pages.
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"     # cada ~15 min
-  workflow_dispatch: {}         # ejecución manual
+  workflow_dispatch: {}
   push:
     branches: [ main ]
+    paths:
+      - "*.html"
+      - ".github/workflows/deploy.yml"
 
 permissions:
-  contents: write     # para commitear datos actualizados
+  contents: read
   pages: write
   id-token: write
 
@@ -22,38 +22,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Instalar dependencias
-        run: pip install -r requirements.txt
-
-      - name: Recolectar muestra en vivo (ADS-B)
-        run: python poller.py --once || true
-
-      - name: Reconstruir movimientos y salidas
-        run: |
-          python build_flights.py || true
-          python build_xlsx.py || true
-          python build_index.py
-          python build_map.py
-          python build_report.py
-          python build_stats.py
-          python build_ayuda.py
-
-      - name: Commitear datos actualizados
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add vuelos.db movimientos.csv index.html mapa_vivo.html reporte_movimientos.html estadisticas.html ayuda.html Padron_aeronaves_provinciales.xlsx 2>/dev/null || true
-          git commit -m "Actualización automática de datos" || echo "Sin cambios"
-          git push || true
 
       - name: Preparar sitio para Pages
         run: |
@@ -64,12 +39,5 @@ jobs:
         with:
           path: public
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
