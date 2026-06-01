@@ -81,8 +81,16 @@ routes=sorted(routes,key=lambda x:x["t"],reverse=True)[:16]
 def corto(lbl): return lbl.split(" (")[0] if lbl else lbl
 ev=[]
 for f in flights:
-    if f["fin"]: ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
+    dst=f["destino"] or ""
+    # "en ruta / sin aeropuerto cercano" => el vuelo sigue en el aire (no aterrizó).
+    # No inventar un aterrizaje: mostrar que va en camino.
+    en_ruta = (not dst) or ("sin aeropuerto" in dst)
     if f["inicio"]: ev.append((f["inicio"], f'{f["inicio"][11:16]}  {f["matricula"]} despegó de {corto(f["origen"])}'))
+    if f["fin"]:
+        if en_ruta:
+            ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} en vuelo · va en camino'))
+        else:
+            ev.append((f["fin"], f'{f["fin"][11:16]}  {f["matricula"]} aterrizó en {corto(f["destino"])}'))
 g=collections.defaultdict(lambda:{"a":set(),"lbl":"","f":""})
 for f in flights:
     fch=(f["fin"] or f["inicio"] or "")[:10]; dst=f["destino"]
