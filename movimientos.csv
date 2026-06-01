@@ -1,2 +1,2 @@
 matricula,provincia,hex,inicio,fin,dur_min,origen,destino,origen_code,destino_code,origen_lat,origen_lon,destino_lat,destino_lon,alt_max_ft,puntos
-LQ-BFS,Santiago del Estero,E02193,2026-06-01 20:52,2026-06-01 21:30,38,AR-0786 (Estancia Las Cabezas),(en ruta / sin aeropuerto cercano),AR-0786,,-32.922366,-59.525393,-29.229401,-62.624342,43000,38
+LQ-BFS,Santiago del Estero,E02193,2026-06-01 20:52,2026-06-01 21:34,41,AR-0786 (Estancia Las Cabezas),AR-0006 (Casares),AR-0786,AR-0006,-32.922366,-59.525393,-28.933839,-62.792315,43000,41
