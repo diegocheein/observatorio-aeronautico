@@ -2,4 +2,4 @@ matricula,provincia,hex,inicio,fin,dur_min,origen,destino,origen_code,destino_co
 LQ-BFS,Santiago del Estero,E02193,2026-06-01 17:52,2026-06-01 18:41,48,GHU (Gualeguaychu) · estimado,SDE (Santiago del Estero) · estimado,SAAG,SANE,-33.005567,-58.612833,-27.765556335399996,-64.3099975586,43000,48
 LQ-BFS,Santiago del Estero,E02193,2026-06-02 08:16,2026-06-02 09:21,65,SDE (Santiago del Estero) · estimado,AEP (Buenos Aires) · estimado,SANE,SABE,-27.765556335399996,-64.3099975586,-34.559419,-58.415536,41000,64
 LV-BXD,Salta,E02604,2026-06-02 08:34,2026-06-02 09:46,72,SDE (Santiago del Estero) · estimado,(fuera de cobertura),SANE,,-27.765556335399996,-64.3099975586,-34.560952,-58.414221,45000,66
-LV-BXD,Salta,E02604,2026-06-02 10:38,2026-06-02 10:58,19,AEP (Buenos Aires),(en vuelo),SABE,,-34.559419,-58.415536,-33.167306,-59.527289,42350,20
+LV-BXD,Salta,E02604,2026-06-02 10:38,2026-06-02 11:08,30,AEP (Buenos Aires),(en vuelo),SABE,,-34.559419,-58.415536,-32.134872,-60.257483,43000,30
