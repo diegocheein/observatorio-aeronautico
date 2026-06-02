@@ -1,2 +1,3 @@
 matricula,provincia,hex,inicio,fin,dur_min,origen,destino,origen_code,destino_code,origen_lat,origen_lon,destino_lat,destino_lon,alt_max_ft,puntos
 LQ-BFS,Santiago del Estero,E02193,2026-06-01 17:52,2026-06-01 18:41,48,GHU (Gualeguaychu) · estimado,SDE (Santiago del Estero) · estimado,SAAG,SANE,-33.005567,-58.612833,-27.765556335399996,-64.3099975586,43000,48
+LQ-BFS,Santiago del Estero,E02193,2026-06-02 08:16,2026-06-02 08:25,9,SDE (Santiago del Estero) · estimado,(en vuelo),SANE,,-27.765556335399996,-64.3099975586,-29.830994,-63.065696,41000,9
