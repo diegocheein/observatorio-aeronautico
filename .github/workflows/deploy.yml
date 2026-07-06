@@ -17,9 +17,11 @@ permissions:
   pages: write
   id-token: write
 
+# Un burst de pushes (el VPS publica cada ~10 min) colapsa en un solo deploy:
+# el mas nuevo cancela al que estuviera en curso y evita colisiones en Pages.
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -39,5 +41,16 @@ jobs:
         with:
           path: public
 
+      # Deploy con reintento: Pages a veces devuelve "Deployment failed, try
+      # again later" (error transitorio). Si el primer intento falla, reintenta.
       - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Esperar antes de reintentar
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+
+      - id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
         uses: actions/deploy-pages@v4
