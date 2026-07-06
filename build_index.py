@@ -86,7 +86,10 @@ for f in flights:
     # Recién aparece (despegue + aterrizaje) cuando el avión ya terminó/está quieto.
     if "en vuelo" in dst.lower():
         continue
-    if f["inicio"]: ev.append((f["inicio"], f'{f["inicio"][11:16]}  {f["matricula"]} despegó de {corto(f["origen"])}'))
+    if f["inicio"]:
+        org=f["origen"] or ""
+        sufo=" (est.)" if "estimado" in org.lower() else ""
+        ev.append((f["inicio"], f'{f["inicio"][11:16]}  {f["matricula"]} despegó de {corto(org)}{sufo}'))
     # Aterrizaje sólo si conocemos un aeropuerto real (las etiquetas entre paréntesis
     # —"(fuera de cobertura)", "(sin aeropuerto cercano)"— no son aeropuertos).
     real_dst = bool(dst) and not dst.startswith("(")

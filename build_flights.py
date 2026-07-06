@@ -133,7 +133,19 @@ def main():
             en_tierra = (posado is not ini) and quieto_seg >= QUIETO_SEG
             finalizado = sin_senal or en_tierra
 
-            o = aeropuerto_cercano(ini[3], ini[4], aps)
+            # --- ORIGEN ---
+            # Si lo captamos bajo y lento, realmente despegó cerca: aeropuerto cercano.
+            # Si apareció alto/en crucero, NO es el despegue real (sólo entró a cobertura):
+            # estimamos el aeropuerto REAL (con IATA) más cercano al primer punto.
+            en_despegue = (ini[5] or 0) <= ALT_TIERRA and (ini[6] or 0) <= GS_TIERRA
+            if en_despegue:
+                o = aeropuerto_cercano(ini[3], ini[4], aps)
+            else:
+                o = aeropuerto_cercano(ini[3], ini[4], aps, solo_reales=True, radio=RADIO_EST)
+                if o["code"]:
+                    o = dict(o); o["label"] = o["label"] + " · estimado"
+                else:
+                    o = {"label": "(fuera de cobertura)", "code": "", "lat": ini[3], "lon": ini[4]}
             if not finalizado:
                 # sigue en el aire: no inventamos un aterrizaje.
                 d = {"label": "(en vuelo)", "code": "", "lat": fin[3], "lon": fin[4]}
