@@ -114,5 +114,5 @@ LV-KJY,Santa Cruz,E0B299,2026-07-04 16:41,2026-07-04 17:55,74,VDM (Viedma / Carm
 LV-CKA,Chubut,E032C1,2026-07-04 17:00,2026-07-04 18:16,75,AEP (Buenos Aires) · estimado,(fuera de cobertura),SABE,,-34.559419,-58.415536,-28.336999,-63.744884,38050,67
 LV-KJY,Santa Cruz,E0B299,2026-07-04 18:59,2026-07-04 20:08,68,AEP (Buenos Aires) · estimado,(fuera de cobertura),SABE,,-34.559419,-58.415536,-40.729344,-61.286108,43000,66
 LV-KJY,Santa Cruz,E0B299,2026-07-04 21:01,2026-07-04 21:47,46,CRD (Comodoro Rivadavia) · estimado,RZA (Puerto Santa Cruz) · estimado,SAVC,SAWU,-45.786941,-67.463355,-50.0165,-68.5792,43000,40
-LV-KJY,Santa Cruz,E0B299,2026-07-06 10:56,2026-07-06 11:26,30,VDM (Viedma / Carmen de Patagones) · estimado,(en vuelo),SAVV,,-40.8692,-63.0004,-38.067947,-60.992821,41000,30
-LV-BBG,Misiones,E1028C,2026-07-06 11:23,2026-07-06 11:26,3,(fuera de cobertura),(en vuelo),,,26.204315,-80.125157,26.332352,-80.25124,3875,4
+LV-KJY,Santa Cruz,E0B299,2026-07-06 10:56,2026-07-06 11:36,40,VDM (Viedma / Carmen de Patagones) · estimado,(en vuelo),SAVV,,-40.8692,-63.0004,-36.936539,-60.265444,41000,40
+LV-BBG,Misiones,E1028C,2026-07-06 11:23,2026-07-06 11:36,13,(fuera de cobertura),(en vuelo),,,26.204315,-80.125157,26.964685,-80.8205,20775,14
