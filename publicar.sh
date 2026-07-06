@@ -30,7 +30,7 @@ git commit -m "Datos ADS-B $(date '+%Y-%m-%d %H:%M') (VPS)" >> "$LOG" 2>&1
 # 3) Push, con reintento rebase favoreciendo los datos del VPS
 if ! git push origin main >> "$LOG" 2>&1; then
     echo "  push rechazado, rebase -X theirs y reintento" >> "$LOG"
-    git pull --rebase -X theirs origin main >> "$LOG" 2>&1
+    git pull --rebase --autostash -X theirs origin main >> "$LOG" 2>&1
     git push origin main >> "$LOG" 2>&1
 fi
 echo "  publicado OK" >> "$LOG"
