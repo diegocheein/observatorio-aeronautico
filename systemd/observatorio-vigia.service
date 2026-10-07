@@ -1,0 +1,8 @@
+[Unit]
+Description=Observatorio Aeronautico - vigia (avisos por Telegram)
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/observatorio
+EnvironmentFile=/etc/observatorio-vigia.env
+ExecStart=/usr/bin/python3 /opt/observatorio/vigia.py

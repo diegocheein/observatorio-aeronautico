@@ -50,8 +50,11 @@ def init_db():
     c.commit()
     return c
 
+ULTIMO_OK = None   # ts de la última consulta que respondió (lo lee vigia.py desde vivo.json)
+
 def consultar(hexes):
     """Consulta la red ADS-B por lista de hex (en bloques), con fuente de respaldo."""
+    global ULTIMO_OK
     out = []
     for i in range(0, len(hexes), 100):
         bloque = ",".join(hexes[i:i+100])
@@ -61,6 +64,7 @@ def consultar(hexes):
                 with urllib.request.urlopen(req, timeout=20) as r:
                     data = json.loads(r.read().decode())
                 out += data.get("ac", [])
+                ULTIMO_OK = int(time.time())
                 break
             except Exception as e:
                 print(f"  [aviso] error consultando {fuente}: {e}")
@@ -73,7 +77,7 @@ def escribir_vivo(aviones, ts):
            "track": a.get("track") or 0} for a in aviones if a.get("lat") is not None]
     tmp = VIVO + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
-        json.dump({"ts": ts, "ac": ac}, f)
+        json.dump({"ts": ts, "ultimo_ok": ULTIMO_OK, "ac": ac}, f)
     os.replace(tmp, VIVO)
 
 def guardar(con, reg, aviones, ts):
@@ -115,6 +119,11 @@ def main():
     reg = cargar_padron()
     print(f"Padrón cargado: {len(reg)} aeronaves con hex rastreable")
     con = init_db()
+    global ULTIMO_OK
+    try:   # conservar el último OK entre reinicios
+        ULTIMO_OK = json.load(open(VIVO)).get("ultimo_ok")
+    except Exception:
+        pass
     if args.once:
         pasada(con, reg); return
     print(f"Recolectando cada {INTERVALO}s. Ctrl+C para frenar.")
