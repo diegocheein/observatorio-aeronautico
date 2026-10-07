@@ -99,7 +99,7 @@ const al30=Object.values(g).filter(x=>x.a.size>=3 && new Date(x.f+'T12:00')>=lim
 document.getElementById('k-al').textContent=al30;
 // mapa
 const map=L.map('map',{zoomControl:true,attributionControl:false}).setView([-40,-63],4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{maxZoom:11}).addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles &copy; Esri'}).addTo(map);
 // aeropuertos
 D.airports.forEach(a=>L.circleMarker([a[1],a[2]],{radius:2.5,color:'#3a5e80',fillColor:'#3a5e80',fillOpacity:.9})
   .addTo(map).bindTooltip(a[0],{direction:'top'}));

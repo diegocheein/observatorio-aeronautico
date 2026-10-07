@@ -92,7 +92,7 @@ BODY="""
 <script>
 const D=__DATA__; const byReg={}; D.aircraft.forEach(a=>byReg[a.matricula]=a);
 const map=L.map('map',{attributionControl:false}).setView([-40,-63],4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{maxZoom:11}).addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles &copy; Esri'}).addTo(map);
 const ley=L.control({position:'bottomleft'});
 ley.onAdd=function(){const d=L.DomUtil.create('div');
   d.style.cssText='background:rgba(8,29,48,.9);color:#e8eef5;padding:8px 11px;border-radius:9px;font:12px Arial;line-height:1.5;border:1px solid #1E3A56';

@@ -51,7 +51,7 @@ const esFds=s=>{const d=dt(s);return !isNaN(d)&&(d.getDay()===0||d.getDay()===6)
 const esNoc=s=>{const d=dt(s);return !isNaN(d)&&(d.getHours()>=22||d.getHours()<6);};
 const esInt=c=>!!c&&!c.startsWith('SA');
 const map=L.map('map',{attributionControl:false}).setView([-40,-63],4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',{maxZoom:11}).addTo(map);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',{maxZoom:16,attribution:'Tiles &copy; Esri'}).addTo(map);
 let layers=[];
 function fillSel(){const sa=document.getElementById('fAero'),sp=document.getElementById('fProv');
   [...new Set(FL.map(f=>f.matricula).filter(Boolean))].sort().forEach(m=>{const o=document.createElement('option');o.value=m;o.textContent=m;sa.appendChild(o);});
