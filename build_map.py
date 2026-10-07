@@ -161,8 +161,8 @@ document.getElementById('plane').onchange=e=>{if(e.target.value)selectAircraft(e
 document.getElementById('btnReset').onclick=resetView;
 ['desde','hasta'].forEach(id=>document.getElementById(id).onchange=()=>{enforceYear();if(curReg)showFlights(curReg);});
 async function live(){const btn=document.getElementById('btnLive');btn.textContent='Consultando…';let ok=0;
- try{for(let i=0;i<D.hexes.length;i+=100){const res=await fetch('https://api.airplanes.live/v2/hex/'+D.hexes.slice(i,i+100).join(','));
-  const j=await res.json();(j.ac||[]).forEach(ac=>{const hx=(ac.hex||'').toUpperCase();const a=D.aircraft.find(x=>x.hex===hx);
+ try{{const res=await fetch('vivo.json?'+Date.now());
+  const j=await res.json();if(Date.now()/1000-j.ts>1800)throw 0;(j.ac||[]).forEach(ac=>{const hx=(ac.hex||'').toUpperCase();const a=D.aircraft.find(x=>x.hex===hx);
    if(a&&ac.lat!=null){a.lat=ac.lat;a.lon=ac.lon;a.track=ac.track||0;a.flying=true;ok++;}});}
   draw();btn.textContent=`En vivo: ${ok} volando`;}catch(e){btn.textContent='Sin conexión · reintentar';}}
 document.getElementById('btnLive').onclick=live;

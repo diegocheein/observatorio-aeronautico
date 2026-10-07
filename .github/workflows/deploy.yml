@@ -10,6 +10,7 @@ on:
     branches: [ main ]
     paths:
       - "*.html"
+      - "vivo.json"
       - ".github/workflows/deploy.yml"
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
       - name: Preparar sitio para Pages
         run: |
           mkdir -p public
-          cp index.html mapa_vivo.html reporte_movimientos.html estadisticas.html ayuda.html public/ 2>/dev/null || true
+          cp index.html mapa_vivo.html reporte_movimientos.html estadisticas.html ayuda.html vivo.json public/ 2>/dev/null || true
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -6,7 +6,7 @@ Genera index.html: dashboard tipo CENTRO DE MONITOREO (oscuro premium).
   y efecto radar sobre Argentina.
 - Cabecera de impacto + KPIs con mini-tendencias + gráfico grande con glow.
 - Ticker de actividad reciente (despegues/aterrizajes/encuentros).
-Datos: padron + vuelos.db + movimientos.csv. "Volando ahora" en vivo (airplanes.live).
+Datos: padron + vuelos.db + movimientos.csv. "Volando ahora" en vivo (adsb.lol).
 Uso: python3 build_index.py
 """
 import csv, json, os, sqlite3, datetime, collections
@@ -192,7 +192,7 @@ HTML=r"""<!doctype html><html lang="es"><head><meta charset="utf-8">
    </div></div>
   </div>
  </div>
- <div class="foot">Datos públicos ADS-B · airplanes.live · hexdb.io · OurAirports — Las alertas son indicios para investigar.</div>
+ <div class="foot">Datos públicos ADS-B · adsb.lol · hexdb.io · OurAirports — Las alertas son indicios para investigar.</div>
 </div>
 <script>
 const D=__DATA__;
@@ -249,9 +249,8 @@ if(D.eventos.length){renderTicker(); setInterval(()=>{ei=(ei+1)%D.eventos.length
 else tk.innerHTML='<div class="ev">Sin actividad registrada todavía.</div>';
 // volando ahora (live)
 async function live(){let ok=0;
-  try{for(let i=0;i<D.hexes.length;i+=100){
-    const res=await fetch('https://api.airplanes.live/v2/hex/'+D.hexes.slice(i,i+100).join(','));
-    const j=await res.json();(j.ac||[]).forEach(ac=>{const hx=(ac.hex||'').toUpperCase();const a=D.aircraft.find(x=>x.hex===hx);
+  try{{const res=await fetch('vivo.json?'+Date.now());
+    const j=await res.json();if(Date.now()/1000-j.ts>1800)throw 0;(j.ac||[]).forEach(ac=>{const hx=(ac.hex||'').toUpperCase();const a=D.aircraft.find(x=>x.hex===hx);
       if(a&&ac.lat!=null){a.lat=ac.lat;a.lon=ac.lon;a.track=ac.track||0;a.flying=true;ok++;}});}
     document.getElementById('k-fly').textContent=ok;drawA();
   }catch(e){document.getElementById('k-fly').textContent='s/d';}}

@@ -20,7 +20,7 @@ python3 build_stats.py   >> "$LOG" 2>&1
 python3 build_ayuda.py   >> "$LOG" 2>&1
 
 # 2) Commitear datos + HTML si cambiaron
-git add vuelos.db movimientos.csv *.html Padron_aeronaves_provinciales.xlsx 2>/dev/null
+git add vuelos.db movimientos.csv vivo.json *.html Padron_aeronaves_provinciales.xlsx 2>/dev/null
 if git diff --cached --quiet; then
     echo "  sin cambios, no se commitea" >> "$LOG"
     exit 0
@@ -34,3 +34,12 @@ if ! git push origin main >> "$LOG" 2>&1; then
     git push origin main >> "$LOG" 2>&1
 fi
 echo "  publicado OK" >> "$LOG"
+
+# 4) Cada publicacion suma una copia de vuelos.db al historial: si .git pasa de
+#    500 MB, dejar solo el ultimo commit (GitHub conserva el historial completo).
+#    En sep-2026 el historial llego a 2,9 GB y lleno el disco del VPS.
+if [ "$(du -sm .git | cut -f1)" -gt 500 ]; then
+    echo "  .git > 500 MB, recortando historial local" >> "$LOG"
+    git fetch -q --depth=1 origin main >> "$LOG" 2>&1 && \
+    git reflog expire --expire=now --all && git gc -q --prune=now >> "$LOG" 2>&1
+fi

@@ -2,7 +2,8 @@
 """
 Recolector ADS-B de aeronaves provinciales argentinas.
 - Lee el padrón (padron_aeronaves.csv), toma los códigos hex.
-- Consulta airplanes.live cada N segundos.
+- Consulta adsb.lol (respaldo: adsb.fi) cada N segundos.
+- Escribe vivo.json con las aeronaves en el aire (lo lee la web para "Volando ahora").
 - Guarda cada posición en una base SQLite (snapshots) y arma "vuelos" (tramos)
   agrupando posiciones contiguas de una misma aeronave.
 
@@ -19,6 +20,10 @@ DB = os.environ.get("PADRON_DB", os.path.join(BASE, "vuelos.db"))
 INTERVALO = 60          # segundos entre consultas
 GAP_VUELO = 30*60       # corte entre tramos: 30 min sin señal => nuevo vuelo
 UA = {"User-Agent": "padron-aeronaves-provinciales/1.0 (proyecto periodistico)"}
+# airplanes.live exige registro desde sep-2026 (HTTP 403); se usan APIs abiertas
+# con el mismo formato readsb. Se prueba en orden hasta que una responda.
+FUENTES = ["https://api.adsb.lol/v2/hex/", "https://opendata.adsb.fi/api/v2/hex/"]
+VIVO = os.path.join(BASE, "vivo.json")
 
 def cargar_padron():
     reg = {}
@@ -46,20 +51,30 @@ def init_db():
     return c
 
 def consultar(hexes):
-    """Consulta airplanes.live por lista de hex (en bloques)."""
+    """Consulta la red ADS-B por lista de hex (en bloques), con fuente de respaldo."""
     out = []
     for i in range(0, len(hexes), 100):
         bloque = ",".join(hexes[i:i+100])
-        url = f"https://api.airplanes.live/v2/hex/{bloque}"
-        try:
-            req = urllib.request.Request(url, headers=UA)
-            with urllib.request.urlopen(req, timeout=20) as r:
-                data = json.loads(r.read().decode())
-            out += data.get("ac", [])
-        except Exception as e:
-            print(f"  [aviso] error consultando bloque: {e}")
+        for fuente in FUENTES:
+            try:
+                req = urllib.request.Request(fuente + bloque, headers=UA)
+                with urllib.request.urlopen(req, timeout=20) as r:
+                    data = json.loads(r.read().decode())
+                out += data.get("ac", [])
+                break
+            except Exception as e:
+                print(f"  [aviso] error consultando {fuente}: {e}")
         time.sleep(1)
     return out
+
+def escribir_vivo(aviones, ts):
+    """vivo.json: aeronaves con posición en la última pasada (para la web)."""
+    ac = [{"hex": (a.get("hex") or "").upper(), "lat": a["lat"], "lon": a["lon"],
+           "track": a.get("track") or 0} for a in aviones if a.get("lat") is not None]
+    tmp = VIVO + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"ts": ts, "ac": ac}, f)
+    os.replace(tmp, VIVO)
 
 def guardar(con, reg, aviones, ts):
     cur = con.cursor()
@@ -83,6 +98,7 @@ def pasada(con, reg):
     hexes = list(reg.keys())
     aviones = consultar(hexes)
     n = guardar(con, reg, aviones, ts)
+    escribir_vivo(aviones, ts)
     hora = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     if n:
         vistos = ", ".join(sorted({reg[a.get("hex","").upper()]["matricula"]
