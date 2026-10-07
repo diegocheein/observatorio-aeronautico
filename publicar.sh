@@ -20,7 +20,10 @@ python3 build_stats.py   >> "$LOG" 2>&1
 python3 build_ayuda.py   >> "$LOG" 2>&1
 
 # 2) Commitear datos + HTML si cambiaron
-git add vuelos.db movimientos.csv vivo.json *.html Padron_aeronaves_provinciales.xlsx 2>/dev/null
+# (de a uno: si falta un archivo, un solo "git add" con todos no agrega ninguno)
+for f in vuelos.db movimientos.csv vivo.json *.html Padron_aeronaves_provinciales.xlsx; do
+    [ -e "$f" ] && git add "$f"
+done
 if git diff --cached --quiet; then
     echo "  sin cambios, no se commitea" >> "$LOG"
     exit 0
