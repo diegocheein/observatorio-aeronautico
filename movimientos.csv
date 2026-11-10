@@ -475,4 +475,5 @@ LQ-YHC,San Juan,E19203,2026-11-09 14:21,2026-11-09 14:23,2,EPA (El Palomar) · e
 LV-BXD,Salta,E02604,2026-11-09 14:29,2026-11-09 15:40,71,EPA (El Palomar) · estimado,(fuera de cobertura),SADP,,-34.6099,-58.6126,-27.932648,-63.301046,43000,68
 LQ-YHC,San Juan,E19203,2026-11-09 20:50,2026-11-09 20:54,4,EPA (El Palomar) · estimado,EPA (El Palomar) · estimado,SADP,SADP,-34.6099,-58.6126,-34.6099,-58.6126,2700,5
 LV-WMI,Buenos Aires,E17349,2026-11-10 09:28,2026-11-10 09:54,26,LPG (La Plata) · estimado,(fuera de cobertura),SADL,,-34.9722,-57.8947,-34.649994,-59.279652,0,26
-LV-BEM,Chubut,E0214D,2026-11-10 10:04,2026-11-10 10:25,21,VDM (Viedma / Carmen de Patagones) · estimado,(en vuelo),SAVV,,-40.8692,-63.0004,-38.939575,-62.223756,31025,21
+LV-BEM,Chubut,E0214D,2026-11-10 10:04,2026-11-10 10:25,21,VDM (Viedma / Carmen de Patagones) · estimado,BHI (Bahía Blanca) · estimado,SAVV,SAZB,-40.8692,-63.0004,-38.725,-62.1693,31025,21
+LV-JWN,Catamarca,E0A5CE,2026-11-10 10:47,2026-11-10 10:54,6,ROS (Rosario) · estimado,(en vuelo),SAAR,,-32.9036,-60.785,-33.594086,-60.573961,41000,7
